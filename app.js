@@ -13,9 +13,8 @@ let lineReader = readline.createInterface({
   input: fs.createReadStream(FILE_UPLOAD_URL).pipe(zlib.createGunzip()),
 });
 
-let lines = "";
 let sessionlines = "";
-const sessionObject = {};
+let sessionObject = {};
 let groupActive = false;
 let sessionActive = false;
 const list = [];
@@ -25,15 +24,10 @@ lineReader.on("line", (line) => {
     groupActive = true;
   }
   if (groupActive) {
-    if (sessionActive) {
-      sessionlines = sessionlines + "\r\n" + line;
-    }
-    lines = lines + "\r\n" + line;
     if (SESSION_KEY_REGEX.test(line)) {
       if (sessionActive) {
         sessionActive = false;
         sessionObject[currentsessionKey] = sessionlines;
-
         sessionlines = "";
       }
       /**https://stackoverflow.com/questions/4724701/regexp-exec-returns-null-sporadically */
@@ -41,14 +35,16 @@ lineReader.on("line", (line) => {
       console.log(":::matches", currentsessionKey);
       sessionActive = true;
       sessionlines += line;
+    } else if (sessionActive) {
+      sessionlines = sessionlines + "\r\n" + line;
     }
   }
   if (SESSION_GROUP_STOP_IDENTIFIER_REGEX.test(line)) {
     groupActive = false;
     sessionActive = false;
-    // list.push(lines);
     list.push(sessionObject);
-    lines = "";
+    console.log(":::::session object", sessionObject);
+    sessionObject = {};
   }
 });
 
